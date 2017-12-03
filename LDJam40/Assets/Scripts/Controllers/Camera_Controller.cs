@@ -19,19 +19,15 @@ public class Camera_Controller : MonoBehaviour {
     float followDampTime;
     private Vector3 velocity = Vector3.zero;
 
-    public float offsetY = 0;
-    Vector3 offsetV2;
 
     float camXPosMin = 0, camXPosMax = 0;
     float camYPosMin = 0, camYPosMax = 0;
 
-    void Awake()
+    void OnEnable()
     {
         instance = this;
         CamMode = CameraMode.Free;
         followDampTime = dampTime;
-        folMouseDampTime = 1.0f;
-        offsetV2 = new Vector3(0, offsetY, 0);
     }
 
     public void SetTargetAndLock(Transform t, float xMIn, float xMax, float yMin, float yMax)
@@ -96,7 +92,7 @@ public class Camera_Controller : MonoBehaviour {
         //targetPos.y = Mathf.Ceil(target.position.y);
 
         Vector3 point = GetComponent<Camera>().WorldToViewportPoint(target.position);
-        Vector3 delta = target.position - GetComponent<Camera>().ViewportToWorldPoint(new Vector3(0.5f, 0.5f, point.z) + offsetV2); //(new Vector3(0.5, 0.5, point.z));
+        Vector3 delta = target.position - GetComponent<Camera>().ViewportToWorldPoint(new Vector3(0.5f, 0.5f, point.z)); //(new Vector3(0.5, 0.5, point.z));
         Vector3 destination = transform.position + delta;
 
         destination.x = Mathf.Clamp(destination.x, camXPosMin, camXPosMax);

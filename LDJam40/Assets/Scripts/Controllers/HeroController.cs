@@ -7,7 +7,11 @@ public class HeroController : MonoBehaviour {
 	Animator anim;
 	float pMoveX, pMoveY;
 	int areaWidth = 100, areaHeight = 100;
-	InputController input_controller;
+	KeyInputController key_controller;
+	MouseInputController mouse_controller;
+	Cabin cabin_interior, cabin_exterior;
+	AreaType curAreaType;
+	public LayerMask interactableMask;
 	float move_x {
 		get{return pMoveX;}
 		set{
@@ -21,28 +25,40 @@ public class HeroController : MonoBehaviour {
 		}
 	}
 
-	void Awake(){
+	void OnEnable(){
 		anim = GetComponentInChildren<Animator>();
 	}
 
-	void Start(){
-		areaWidth = Area.instance.width - 1;
-		areaHeight = Area.instance.height - 1;
-
-		input_controller = InputController.instance;
-		input_controller.onKeyPressed += OnMove;
-		input_controller.onKeyHeld += Move;
-		input_controller.onKeyUp += OnMoveStop;
+	public void Init(){
+		areaWidth = AreaController.instance.active_area.width - 1;
+		areaHeight = AreaController.instance.active_area.height - 1;
+		mouse_controller = MouseInputController.instance;
+		mouse_controller.onRightClick += TryInteract;
+		key_controller = KeyInputController.instance;
+		key_controller.onKeyPressed += OnMove;
+		key_controller.onKeyHeld += Move;
+		key_controller.onKeyUp += OnMoveStop;
 		SetAnimParams(0, 0);
 		Camera_Controller.instance.SetTargetAndLock(this.transform, 0, areaWidth, 0, areaHeight);
+		OnChangeArea();
+
+		move_x = transform.position.x;
+		move_y = transform.position.y;
 	}
 
-	void Update(){
-		 
-		
+	public void OnChangeArea(){
+		curAreaType = AreaController.instance.active_area.areaType;
+		if (curAreaType == AreaType.Exterior)
+			cabin_exterior = AreaController.instance.area_filler.cabin_exterior;
+		else
+			cabin_interior = AreaController.instance.area_filler.cabin_interior;
+		Debug.Log("Hero reads from AreaController that active area is : " + curAreaType);
 	}
+
+
 
 	void OnMove(){
+		anim.ResetTrigger("hero_Idle");
 		anim.SetTrigger("hero_Walk");
 	}
 	void Move(){
@@ -59,11 +75,58 @@ public class HeroController : MonoBehaviour {
 	void ClampPosition(){
 		move_x = transform.position.x;
 		move_y = transform.position.y;
+		if (curAreaType == AreaType.Exterior){
+			if (move_x >= cabin_exterior.dimensions.startX && move_x <= cabin_exterior.dimensions.endX &&
+				move_y >= cabin_exterior.dimensions.startY && move_y <= cabin_exterior.dimensions.endY){
+				move_x = cabin_exterior.doorX;
+				move_y = cabin_exterior.doorY;
+			}
+		}
+		else{
+			if (move_x <= cabin_interior.dimensions.startX){
+				move_x = cabin_interior.dimensions.startX;
+			}
+			else if (move_x >= cabin_interior.dimensions.endX){
+				move_x = cabin_interior.dimensions.endX;
+			}
+			if (move_y <= cabin_interior.dimensions.startY){
+				move_y = cabin_interior.dimensions.startY;
+			}
+			else if (move_y >= cabin_interior.dimensions.endY - 1){
+				move_y = cabin_interior.dimensions.endY - 1;
+			}
+		}
+	
 		transform.position = new Vector2(move_x, move_y);
 	}
 
 	void SetAnimParams(float x, float y){
 		anim.SetFloat("x", x);
 		anim.SetFloat("y", y);
+	}
+
+ void TryInteract(Vector2 position)
+    {
+        RaycastHit2D hit = Physics2D.Raycast(position, Vector2.zero, 0, interactableMask);
+		Debug.Log("shooting ray");
+        if (hit.collider != null)
+        {
+            if (hit.collider.gameObject.GetComponentInParent<Interactable>() != null)
+            {
+                hit.collider.gameObject.GetComponentInParent<Interactable>().TryInteract(this.gameObject);
+            }
+        
+        }
+    }
+
+	void OnDisable(){
+		if (key_controller != null){
+			key_controller.onKeyPressed -= OnMove;
+			key_controller.onKeyHeld -= Move;
+			key_controller.onKeyUp -= OnMoveStop;
+		}
+		if (mouse_controller != null){
+			mouse_controller.onRightClick -= TryInteract;
+		}
 	}
 }

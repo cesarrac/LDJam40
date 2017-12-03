@@ -2,15 +2,19 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+public enum AreaType{Interior, Exterior}
 public class Area  {
+	public string name;
 	public int width{get;protected set;}
 	public int height{get; protected set;}
-	public static Area instance {get; protected set;}
 	public Tile[,] tileGrid {get; protected set;}
-	public Area(int _width, int _height){
-		instance = this;
+	public AreaType areaType = AreaType.Exterior;
+	public bool hasFilled  {get; protected set;}
+	public Area(int _width, int _height, string _name, AreaType aType){
 		width = _width;
 		height = _height;
+		name = _name;
+		areaType = aType;
 	}
 	public void Generate(int _width = 0, int _height = 0){
 		// Re-set width if params set
@@ -31,10 +35,14 @@ public class Area  {
 	}
 
 	public Tile GetTile(int x, int y){
-		if (x >= 0 && x <= width && y >= 0 && y <= height){
+		if (x >= 0 && x < width && y >= 0 && y < height){
 			return tileGrid[x, y];
 		}
 		return null;
+	}
+
+	public void SetFilled(){
+		hasFilled = true;
 	}
 }
 
