@@ -4,33 +4,35 @@ using UnityEngine;
 
 public class AreaController : MonoBehaviour {
 	public static AreaController instance {get; protected set;}
-	public List<GameObject> tile_GObjs;
+	Dictionary<Tile, GameObject> tile_GObjs;
 	public Area active_area {
 		get{return default_areas[activeAreaIndex];}
 	}
 	int activeAreaIndex = 0;
 	Area[] default_areas;
 	public AreaFiller area_filler {get; protected set;}
-	CharacterGenerator character_generator;
+	public CharacterGenerator character_generator {get; protected set;}
 	SpriteManager spriteMgr = SpriteManager.instance;
 	ObjectPool pool;	
 	GameObject tileHolder;
 
 	void Awake(){
 		instance = this;
+		default_areas = new Area[2];
+		default_areas[0] = new Area(50, 50, "Exterior", AreaType.Exterior);
+		default_areas[1] = new Area(10, 10, "House", AreaType.Interior);
 	}
 	void Start(){
 		pool = ObjectPool.instance;
 		spriteMgr = SpriteManager.instance;
-		tile_GObjs = new List<GameObject>();
+		tile_GObjs = new Dictionary<Tile, GameObject>();
 		tileHolder = new GameObject();
 		tileHolder.name = "Tiles";
-		default_areas = new Area[2];
-		default_areas[0] = new Area(50, 50, "Exterior", AreaType.Exterior);
-		default_areas[1] = new Area(10, 10, "House", AreaType.Interior);
+		
 		
 		character_generator = new CharacterGenerator();
-		GenerateArea(1, 5, 5);
+
+		GenerateArea(0, 25, 25);
 	
 	}
 
@@ -48,17 +50,24 @@ public class AreaController : MonoBehaviour {
 
 			area_filler = new AreaFiller(active_area);
 			GenerateAreaGObjs();
+			// Spawn entities:
 			character_generator.SpawnCharacter( playerStartX, playerStartY);
+			if (active_area.areaType == AreaType.Exterior){
+
+				EnemyManager.instance.SpawnEnemies(1, new Vector2(15, 15));
+			}
+			Debug.Log("Area generated: " + active_area.name);
 		}
 	}
 	public void GenerateAreaGObjs(){
 		if (tile_GObjs.Count > 0){
 			PoolTiles();
 			character_generator.PoolCharacter();
+			EnemyManager.instance.PoolEnemies();
 		}
 		
-		for(int x = 0; x < active_area.width; x++){
-			for(int y = 0; y < active_area.height; y++){
+		for(int x = 0; x < active_area.Width; x++){
+			for(int y = 0; y < active_area.Height; y++){
 				Tile tile = active_area.GetTile(x, y);
 				if (tile == null)
 					continue;
@@ -74,12 +83,18 @@ public class AreaController : MonoBehaviour {
 				if (tile.tileType == TileType.CabExt || tile.tileType == TileType.CabInt)
 					DoDoor(x, y,tileGObj, sr);
 
-			
-				tile_GObjs.Add(tileGObj);
+				if (tile.extractable != null){
+					DoExtractables(tile, tileGObj);
+				}
+				tile_GObjs.Add(tile, tileGObj);
 			}
 		}
 	}
-
+	void DoExtractables(Tile tile, GameObject tileGobj){
+		GameObject extractGobj = pool.GetObjectForType("Extractable", true, tile.worldPos);
+		extractGobj.GetComponent<Extractable_Controller>().InitExtractable(tile.extractable);
+		extractGobj.transform.SetParent(tileGobj.transform);
+	}
 	void DoDoor(int x,int y, GameObject tileGObj, SpriteRenderer sr){
 			Cabin cabin_ext = area_filler.cabin_exterior;
 			Cabin cabin_int = area_filler.cabin_interior;
@@ -121,9 +136,10 @@ public class AreaController : MonoBehaviour {
 	
 
 	void PoolTiles(){
-		foreach(GameObject gobj in tile_GObjs){
+		foreach(GameObject gobj in tile_GObjs.Values){
+
 			if (gobj.transform.childCount > 1){
-				Debug.Log("pool tile collider please");
+				Debug.Log("pool tile children please");
 				PoolTileAddOns(gobj);
 			}
 			// Reset sprite renderer
@@ -145,5 +161,10 @@ public class AreaController : MonoBehaviour {
 		foreach(GameObject gobj in addOns){
 			pool.PoolObject(gobj);
 		}
+	}
+	public GameObject GetTileGObj(Tile tile){
+		if (tile_GObjs.ContainsKey(tile) == false)
+			return null;
+		return tile_GObjs[tile];
 	}
 }

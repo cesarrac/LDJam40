@@ -8,9 +8,9 @@ public class AreaFiller {
     public List<DirtPatch>dirt_patches {get; protected set;}
     public AreaFiller(Area activeArea){
         active_area = activeArea;
-        cabin_exterior = new Cabin(Mathf.RoundToInt(active_area.width * 0.5f), Mathf.RoundToInt(active_area.height * 0.5f), 
+        cabin_exterior = new Cabin(Mathf.RoundToInt(active_area.Width * 0.5f), Mathf.RoundToInt(active_area.Height * 0.5f), 
                                    4, 3);
-        cabin_interior = new Cabin(Mathf.RoundToInt(active_area.width * 0.5f), Mathf.RoundToInt(active_area.height * 0.5f), 
+        cabin_interior = new Cabin(Mathf.RoundToInt(active_area.Width * 0.5f), Mathf.RoundToInt(active_area.Height * 0.5f), 
                                 6, 5);
         if (active_area.hasFilled == true){
             return;
@@ -22,7 +22,7 @@ public class AreaFiller {
         else{
             FillInterior();
         }
-        active_area.SetFilled();
+        active_area.SetToFilled();
     }
 
     void FillExterior(){
@@ -33,8 +33,8 @@ public class AreaFiller {
         // Set the exterior of the interior area in the center of the map
        
   
-        for(int x = 0; x < active_area.width; x++){
-            for(int y = 0; y < active_area.height; y++){
+        for(int x = 0; x < active_area.Width; x++){
+            for(int y = 0; y < active_area.Height; y++){
                 Tile tile = active_area.tileGrid[x, y];
                 if (tile == null)
                     continue;
@@ -60,8 +60,8 @@ public class AreaFiller {
                 // Set as grass by default:
                 tile.SetAs(typeSelected);
                 if (typeSelected == TileType.Dirt && 
-                    x >= map_margin && x <= active_area.width - map_margin &&
-                    y >= map_margin && y <= active_area.height - map_margin){
+                    x >= map_margin && x <= active_area.Width - map_margin &&
+                    y >= map_margin && y <= active_area.Height - map_margin){
                     FillDirtPatch(x, y);
                 }
             }
@@ -98,29 +98,29 @@ public class AreaFiller {
                     continue;
                 }
                 if (x > startX && x < lastX && y > startY && y < lastY){
-                    active_area.tileGrid[x, y].SetAs(TileType.Dirt);
+                    tile.SetAs(TileType.Dirt);
+                    // Chance of ORE:
+                    FillOre(tile);
                 }
                 else{
-                    active_area.tileGrid[x, y].SetAs(TileType.Grass_Dirt);
-                    // Chance of ORE:
-                    FillOre(x, y);
+                    tile.SetAs(TileType.Grass_Dirt);
                 }
             }
         }
     }
 
-    void FillOre(int x, int y){
-        if (Random.Range(1, 20) == 1){
+    void FillOre(Tile tile){
+        if (Random.Range(1, 10) == 1){
             // Place ore on top of dirt tile:
-            
+            ExtractableManager.instance.PlaceExtractable(tile);
         }
     }
 
     void FillInterior(){
         Debug.Log("Filling interior!");
       
-        for(int x = 0; x < active_area.width; x++){
-            for(int y = 0; y < active_area.height; y++){
+        for(int x = 0; x < active_area.Width; x++){
+            for(int y = 0; y < active_area.Height; y++){
                  if (x >= cabin_interior.dimensions.startX && y >= cabin_interior.dimensions.startY && 
                     x <= cabin_interior.dimensions.endX && y <= cabin_interior.dimensions.endY){
                             // Make door

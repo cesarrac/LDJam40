@@ -12,6 +12,11 @@ public class HeroController : MonoBehaviour {
 	Cabin cabin_interior, cabin_exterior;
 	AreaType curAreaType;
 	public LayerMask interactableMask;
+	AreaController areaController;
+	public Inventory heroInventory {get; protected set;}
+	RadiationTracker radiation_tracker;
+	float speed = 1;
+	bool isMoving = false;
 	float move_x {
 		get{return pMoveX;}
 		set{
@@ -24,35 +29,41 @@ public class HeroController : MonoBehaviour {
 			pMoveY = Mathf.Clamp(value, 0, areaHeight);
 		}
 	}
-
+	
 	void OnEnable(){
 		anim = GetComponentInChildren<Animator>();
 	}
 
-	public void Init(){
-		areaWidth = AreaController.instance.active_area.width - 1;
-		areaHeight = AreaController.instance.active_area.height - 1;
+	public void Init(Inventory inventory, float moveSpeed){
+		speed = moveSpeed;
+		areaController = AreaController.instance;
+		areaWidth = areaController.active_area.Width - 1;
+		areaHeight = areaController.active_area.Height - 1;
 		mouse_controller = MouseInputController.instance;
 		mouse_controller.onRightClick += TryInteract;
 		key_controller = KeyInputController.instance;
 		key_controller.onKeyPressed += OnMove;
 		key_controller.onKeyHeld += Move;
 		key_controller.onKeyUp += OnMoveStop;
+		key_controller.onInteractBttnPressed += TryInteract;
 		SetAnimParams(0, 0);
 		Camera_Controller.instance.SetTargetAndLock(this.transform, 0, areaWidth, 0, areaHeight);
 		OnChangeArea();
-
+		heroInventory = inventory;
+		radiation_tracker = new RadiationTracker(heroInventory);
+		InventoryUI.instance.Init(heroInventory, radiation_tracker);
 		move_x = transform.position.x;
 		move_y = transform.position.y;
+		GetComponent<HeroAttackController>().Init();
 	}
 
 	public void OnChangeArea(){
-		curAreaType = AreaController.instance.active_area.areaType;
+		curAreaType = areaController.active_area.areaType;
 		if (curAreaType == AreaType.Exterior)
-			cabin_exterior = AreaController.instance.area_filler.cabin_exterior;
+			cabin_exterior = areaController.area_filler.cabin_exterior;
 		else
-			cabin_interior = AreaController.instance.area_filler.cabin_interior;
-		Debug.Log("Hero reads from AreaController that active area is : " + curAreaType);
+			cabin_interior = areaController.area_filler.cabin_interior;
+	//	Debug.Log("Hero reads from AreaController that active area is : " + curAreaType);
 	}
 
 
@@ -60,16 +71,20 @@ public class HeroController : MonoBehaviour {
 	void OnMove(){
 		anim.ResetTrigger("hero_Idle");
 		anim.SetTrigger("hero_Walk");
+		isMoving = true;
 	}
 	void Move(){
 		float input_x = Input.GetAxisRaw("Horizontal");
 		float input_y = Input.GetAxisRaw("Vertical");
-		transform.position += new Vector3(input_x, input_y, 0) * 3 * Time.deltaTime;
+		transform.position += new Vector3(input_x, input_y, 0) * speed * Time.deltaTime;
 		ClampPosition();
 		SetAnimParams(input_x, input_y);
 	}
 	void OnMoveStop(){
-		anim.SetTrigger("hero_Idle");
+		if (isMoving == true){
+			anim.SetTrigger("hero_Idle");
+			isMoving = false;
+		}
 	}
 
 	void ClampPosition(){
@@ -105,7 +120,7 @@ public class HeroController : MonoBehaviour {
 		anim.SetFloat("y", y);
 	}
 
- void TryInteract(Vector2 position)
+ 	void TryInteract(Vector2 position)
     {
         RaycastHit2D hit = Physics2D.Raycast(position, Vector2.zero, 0, interactableMask);
 		Debug.Log("shooting ray");
@@ -118,15 +133,59 @@ public class HeroController : MonoBehaviour {
         
         }
     }
+	void TryInteract(){
+		// Get tile under player
+		Tile tileUnderMe = areaController.active_area.GetTile(transform.position);
+		if (tileUnderMe == null)
+			return;
+		GameObject tileGobj = areaController.GetTileGObj(tileUnderMe);
+		if (tileGobj == null)
+			return;
+		Interactable interactable = null;
+
+		while(interactable == null){
+
+			interactable = tileGobj.GetComponentInChildren<Interactable>();
+
+			if (interactable == null){
+				// try its neighbors
+				Tile[] neighbors = tileUnderMe.GetNeighbors();
+				for(int i = 0; i < neighbors.Length; i++){
+					if (neighbors[i] == null)
+						continue;
+					tileGobj = areaController.GetTileGObj(neighbors[i]);
+					if (tileGobj == null)
+						continue;
+
+					interactable = tileGobj.GetComponentInChildren<Interactable>();
+					
+					if (interactable != null)
+						break; // FOUND ONE
+				}
+
+				// if nothing was found, break!
+				break;
+			}
+		}
+
+		if (interactable != null)
+			interactable.TryInteract(this.gameObject);
+	
+	}
 
 	void OnDisable(){
 		if (key_controller != null){
 			key_controller.onKeyPressed -= OnMove;
 			key_controller.onKeyHeld -= Move;
 			key_controller.onKeyUp -= OnMoveStop;
+			key_controller.onInteractBttnPressed -= TryInteract;
 		}
 		if (mouse_controller != null){
 			mouse_controller.onRightClick -= TryInteract;
+		}
+		if (radiation_tracker != null){
+			if (heroInventory != null)
+				heroInventory.onInventoryChanged -= radiation_tracker.OnRadiationReceived;
 		}
 	}
 }

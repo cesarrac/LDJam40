@@ -8,6 +8,7 @@ public class SpriteManager : MonoBehaviour {
 	Dictionary<string, Sprite> spriteMap;
 	public Sprite defaultSprite;
 	AreaController areaController;
+	int totalOreSprites = 0;
 	void Awake(){
 		instance = this;
 		Init();
@@ -18,13 +19,21 @@ public class SpriteManager : MonoBehaviour {
 		for(int i = 0; i < tiles.Length; i++){
 			spriteMap.Add(tiles[i].name, tiles[i]);
 		}
+		Sprite[] ore = Resources.LoadAll<Sprite>("Sprites/Tiles/Ore");
+		for(int i = 0; i < ore.Length; i++){
+			spriteMap.Add(ore[i].name, ore[i]);
+		}
+		totalOreSprites = ore.Length;
 	}
 	void Start(){
 		areaController = AreaController.instance;
 	}
 	public Sprite GetSprite(string name){
+		if (name == null)
+			return defaultSprite;
+
 		if (spriteMap.ContainsKey(name) == false){
-			Debug.Log("Sprite Manager could not find sprite: " + name);
+			//Debug.Log("Sprite Manager could not find sprite: " + name);
 			return defaultSprite;
 		}
 		return spriteMap[name];
@@ -99,4 +108,9 @@ public class SpriteManager : MonoBehaviour {
 
         return string.Empty;
     }
+	public Sprite GetOreSprite(){
+		string oreName = "Ore_" + Random.Range(0, totalOreSprites);
+		//Debug.Log("Getting sprite " + oreName);
+		return GetSprite(oreName);
+	}
 }
