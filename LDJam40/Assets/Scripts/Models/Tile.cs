@@ -19,21 +19,22 @@ public class Tile  {
 	public int Y {get; protected set;}
 	public Vector2 worldPos {get; protected set;}
 	public Extractable extractable {get; protected set;}
+
+	public bool hasTerminal {get; protected set;}
 	public float MovementCost
     {
         get
         {
         	if (tileType == TileType.Empty)
                 return 0;
+			if (tileType == TileType.CabExt)
+                return 0;
+			if (tileType == TileType.CabInt)
+                return 0;
             if (extractable != null)
-                return 1 * 4;
+                return 0;
 
             return 1;
-        }
-
-        set
-        {
-            movementCost = value;
         }
     }
 
@@ -54,6 +55,9 @@ public class Tile  {
 
 	public void SetAs(TileType newTileType){
 		tileType = newTileType;
+	}
+	public void SetAsTerminal(){
+		hasTerminal = true;
 	}
 
 	public Tile[] GetNeighbors(bool getDiags = true){

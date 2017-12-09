@@ -11,6 +11,7 @@ public class KeyInputController : MonoBehaviour {
 	public event OnKey onKeyUp;
 	public event OnKey onInteractBttnPressed;
 	public event OnKey onShootPressed, onShootHeld, onShootUp;
+	public event OnKey onLockMoveHeld, onLockMoveUp;
 	void Awake(){
 		instance = this;
 	}
@@ -18,8 +19,31 @@ public class KeyInputController : MonoBehaviour {
 	void Update(){
 		
 
+		 UpdateMovementKeys();
+
+		if (Input.GetButtonDown("Interact")){
+			if (onInteractBttnPressed != null)
+				onInteractBttnPressed();
+		}
+		if (Input.GetButtonDown("Shoot")){
+			if (onShootPressed != null)
+				onShootPressed();
+		}
+		if (Input.GetButton("Shoot")){
+			if (onShootHeld != null)
+				onShootHeld();
+		}
+		if (Input.GetButtonUp("Shoot")){
+			if (onShootUp != null)
+				onShootUp();
+		}
+	
+	}
+
+	void UpdateMovementKeys(){
+
 		if (Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.S) ||
-			Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.D)){
+		Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.D)){
 			if (onKeyPressed != null){
 				onKeyPressed();
 			}
@@ -42,24 +66,6 @@ public class KeyInputController : MonoBehaviour {
 					onKeyUp();
 			}
 		}
-
-		if (Input.GetButtonDown("Interact")){
-			if (onInteractBttnPressed != null)
-				onInteractBttnPressed();
-		}
-		if (Input.GetButtonDown("Shoot")){
-			if (onShootPressed != null)
-				onShootPressed();
-		}
-		if (Input.GetButton("Shoot")){
-			if (onShootHeld != null)
-				onShootHeld();
-		}
-		if (Input.GetButtonUp("Shoot")){
-			if (onShootUp != null)
-				onShootUp();
-		}
-	
 	}
 
 

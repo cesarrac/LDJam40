@@ -20,14 +20,16 @@ public class CharacterGenerator  {
 
         hero_GObj = pool.GetObjectForType(heroName, true, new Vector2(startX, startY));
         hero_GObj.GetComponent<HeroController>().Init(active_inventory, statValues[1]);
-        hero_GObj.GetComponent<CombatController>().Init(statValues, startingHP);
+        hero_GObj.GetComponent<CombatController>().Init(statValues, startingHP, true);
         hero_GObj.GetComponent<HealthController>().onDeath += OnCharacterDeath;
     }
 
     public void OnCharacterDeath(){
         // Show a screen // do animations // pool game obj
         // show menu to restart
-         hero_GObj.GetComponent<HealthController>().onDeath -= OnCharacterDeath;
+        // hero_GObj.GetComponent<HealthController>().onDeath -= OnCharacterDeath;
+        InventoryUI.instance.FadeInRestartMenu();
+        SoundController.Instance.MuteAmbient();
          PoolCharacter();
     }
 
@@ -36,6 +38,7 @@ public class CharacterGenerator  {
         // NOTE: The inventory should NOT be saved if the player died
         active_inventory = hero_GObj.GetComponent<HeroController>().heroInventory;
         pool.PoolObject(hero_GObj);
-        hero_GObj = null;
+       // hero_GObj = null;
+       
     }
 }

@@ -6,6 +6,7 @@ public class AreaFiller {
     Area active_area;
     public Cabin cabin_exterior, cabin_interior;
     public List<DirtPatch>dirt_patches {get; protected set;}
+    int terminalTileX, terminalTileY;
     public AreaFiller(Area activeArea){
         active_area = activeArea;
         cabin_exterior = new Cabin(Mathf.RoundToInt(active_area.Width * 0.5f), Mathf.RoundToInt(active_area.Height * 0.5f), 
@@ -15,11 +16,14 @@ public class AreaFiller {
         if (active_area.hasFilled == true){
             return;
         }
+       
         if (active_area.areaType == AreaType.Exterior){
 
             FillExterior();
         }
         else{
+            terminalTileX = Mathf.RoundToInt(activeArea.Width * 0.5f);
+		    terminalTileY = Mathf.RoundToInt(activeArea.Height * 0.5f);
             FillInterior();
         }
         active_area.SetToFilled();
@@ -121,6 +125,7 @@ public class AreaFiller {
       
         for(int x = 0; x < active_area.Width; x++){
             for(int y = 0; y < active_area.Height; y++){
+
                  if (x >= cabin_interior.dimensions.startX && y >= cabin_interior.dimensions.startY && 
                     x <= cabin_interior.dimensions.endX && y <= cabin_interior.dimensions.endY){
                             // Make door
@@ -128,12 +133,20 @@ public class AreaFiller {
                                 active_area.tileGrid[x, y].SetAs(TileType.CabinDoor);
                                 continue;
                         } */
+                        if (x == terminalTileX && y == terminalTileY){
+                            active_area.tileGrid[x, y].SetAsTerminal();
+                        }
                         active_area.tileGrid[x, y].SetAs(TileType.CabInt);
                         continue;
                 }
                  active_area.tileGrid[x, y].SetAs(TileType.Empty);
             }
         }
+    }
+
+    void FillFurniture(){
+        // for now placing terminal in the center
+
     }
 
 }

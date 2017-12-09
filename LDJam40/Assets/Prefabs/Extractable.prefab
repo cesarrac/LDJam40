@@ -145,7 +145,7 @@ CircleCollider2D:
   m_UsedByComposite: 0
   m_Offset: {x: 0.5, y: 0.5}
   serializedVersion: 2
-  m_Radius: 0.5
+  m_Radius: 6
 --- !u!95 &95434048849061792
 Animator:
   serializedVersion: 3
@@ -176,7 +176,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   interactionWorldPoint: {x: 0, y: 0, z: 0}
   circleCollider: {fileID: 58502612241530298}
-  desiredRadius: 1
+  desiredRadius: 3
   interactor: {fileID: 0}
 --- !u!212 &212080801964015038
 SpriteRenderer:

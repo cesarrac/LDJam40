@@ -15,12 +15,14 @@ public class AreaController : MonoBehaviour {
 	SpriteManager spriteMgr = SpriteManager.instance;
 	ObjectPool pool;	
 	GameObject tileHolder;
-
+	GameObject terminalGObj;
+	
 	void Awake(){
 		instance = this;
 		default_areas = new Area[2];
 		default_areas[0] = new Area(50, 50, "Exterior", AreaType.Exterior);
 		default_areas[1] = new Area(10, 10, "House", AreaType.Interior);
+		
 	}
 	void Start(){
 		pool = ObjectPool.instance;
@@ -32,11 +34,12 @@ public class AreaController : MonoBehaviour {
 		
 		character_generator = new CharacterGenerator();
 
-		GenerateArea(0, 25, 25);
+		GenerateArea(1, 5, 4);
 	
 	}
 
 	public void GenerateArea(int areaIndex, int playerStartX, int playerStartY){
+		SoundController.Instance.MuteAmbient();
 		if (areaIndex >= default_areas.Length || areaIndex < 0)
 			areaIndex = 0;
 
@@ -49,12 +52,17 @@ public class AreaController : MonoBehaviour {
 			}
 
 			area_filler = new AreaFiller(active_area);
+
 			GenerateAreaGObjs();
+
 			// Spawn entities:
 			character_generator.SpawnCharacter( playerStartX, playerStartY);
 			if (active_area.areaType == AreaType.Exterior){
 
-				EnemyManager.instance.SpawnEnemies(1, new Vector2(15, 15));
+				EnemyManager.instance.GenerateEnemyNests(active_area);
+				//EnemyManager.instance.SpawnEnemies();
+				FX_Controller.instance.StartRandomFX();
+				SoundController.Instance.PlayAmbient();
 			}
 			Debug.Log("Area generated: " + active_area.name);
 		}
@@ -64,6 +72,8 @@ public class AreaController : MonoBehaviour {
 			PoolTiles();
 			character_generator.PoolCharacter();
 			EnemyManager.instance.PoolEnemies();
+			FX_Controller.instance.StopRandomFX();
+			TerminalController.instance.Pool();
 		}
 		
 		for(int x = 0; x < active_area.Width; x++){
@@ -82,7 +92,9 @@ public class AreaController : MonoBehaviour {
 				}
 				if (tile.tileType == TileType.CabExt || tile.tileType == TileType.CabInt)
 					DoDoor(x, y,tileGObj, sr);
-
+				if (tile.hasTerminal){
+					DoTerminal(tile);
+				}
 				if (tile.extractable != null){
 					DoExtractables(tile, tileGObj);
 				}
@@ -115,6 +127,11 @@ public class AreaController : MonoBehaviour {
 					intCollider.GetComponent<Tile_Interactable>().SetDoorParams(0, 23, 25);
 				}
 			}
+	}
+	void DoTerminal(Tile tile){
+		terminalGObj = pool.GetObjectForType("Terminal", true, tile.worldPos);
+		terminalGObj.GetComponent<TerminalController>().Init();
+		terminalGObj.GetComponent<Terminal_Interactable>().Init(tile.worldPos);
 	}
 
 	void CabinExtSpriteCatch(SpriteRenderer spriteRenderer, int x, int y){

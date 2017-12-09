@@ -25,7 +25,7 @@ public class EnemyMoveController : MonoBehaviour {
     float distToTravel;
     float movePercent;
     public bool isMoving {get; protected set;}
-	float speed = 3;
+	Stat speed;
 	Vector2 destDirection;
 	public delegate void DestinationReached();
     public event DestinationReached onDestReached;
@@ -50,33 +50,26 @@ public class EnemyMoveController : MonoBehaviour {
 	Area activeArea;
 	public void Init(float moveSpeed){
   		activeArea = AreaController.instance.active_area;
-        speed = moveSpeed;
+        speed = new Stat(moveSpeed, StatType.MoveSpeed);
 		curTile = activeArea.GetTile(transform.position);
         aI_Controller = GetComponent<AI_Controller>();
        
+       // Modify this unit's speed to add randomness to each unit
+       speed.AddModifier(Random.Range(-0.5f, 0.5f));
 	}
 	public void SetDesiredPos(Vector2 desired)
     {
 		//Debug.Log("SetDesiredPos");
         
-        movePercent = 0; 
-        curTile = activeArea.GetTile(transform.position);
+       // movePercent = 0; 
+       // curTile = activeArea.GetTile(transform.position);
 		DestTile = activeArea.GetTile(desired);
 
         
-
-		if (path == null || path.Length() == 0)
-        {
-            path = new Path_AStar(activeArea, curTile, DestTile);
-            if (path == null || path.Length() == 0){
-                Debug.LogError("Path is null!");
-                return;
-            }
-        }
-		Tile firstTileInPath = path.Dequeue();
+        aI_Controller.anim.ResetTrigger("idle");
+        aI_Controller.anim.SetTrigger("moving");
 
         isMoving = true;
-        aI_Controller.anim.SetTrigger("moving");
 
     }
 
@@ -86,76 +79,91 @@ public class EnemyMoveController : MonoBehaviour {
         {
             DoMovement();
 			
+            transform.position = new Vector2(X, Y);
         }
-        transform.position = new Vector2(X, Y);
     }
 	void DoMovement(){
 		if (curTile == DestTile)
         {
-            // We made it
-            DestReached();
+              // We made it
+            StopMove();
             return;
         }
-		if (path.Length() <= 0){
-			
-            DestReached();
-			return;
-		}
-		if (nextTile == null || nextTile == curTile)
+       
+		
+	    if (nextTile == null || nextTile == curTile)
         {
             // Get the next tile
+            if (path == null || path.Length() == 0)
+            {
+                // Generate path
+                path = new Path_AStar(activeArea, curTile, DestTile);
+                if (path.Length() == 0)
+                {
+                    StopMove();
+                   // Debug.LogError("Enemy's PathAStar did not return a path!");
+                    return;
+                }
+
+                // Ignore the first tile since we are on it
+                nextTile = path.Dequeue();
+            }
 
             nextTile = path.Dequeue();
 
             SetDirection();
-        }
-		
-		ENTERABILITY nextTileEnterability = nextTile.CanEnter();
-        switch (nextTileEnterability)
-        {
-            case ENTERABILITY.Never:
-                DestReached();
-                return;
-            default:
-             if (isMoving == false)
-                    isMoving = true;
-                break;
-               
-        }
 
-        if (nextTile == curTile)
-        {
-            isMoving = false;
-            return;
+            ENTERABILITY nextTileEnterability = nextTile.CanEnter();
+            switch (nextTileEnterability)
+            {
+                case ENTERABILITY.Never:
+                    // Cant go on
+                    StopMove();
+                    return;
+                
+            }
+
+            if (nextTile == curTile)
+            {
+                StopMove();
+                return;
+            }
+       
+    
         }
-        // How much distance can we travel this frame?
-		float distToTravel = Mathf.Sqrt(
-        	Mathf.Pow(curTile.X - nextTile.X, 2) +
+            // How much distance can we travel this frame?
+        float distToTravel = Mathf.Sqrt(
+            Mathf.Pow(curTile.X - nextTile.X, 2) +
             Mathf.Pow(curTile.Y - nextTile.Y, 2) );
 
         // How much distance can we travel this frame?
-        float distThisFrame = speed / nextTile.MovementCost * Time.deltaTime;
+        float distThisFrame = speed.GetValue() / nextTile.MovementCost * Time.deltaTime;
 
         float perThisFrame = distThisFrame / distToTravel;
 
-       movePercent += perThisFrame;
+        movePercent += perThisFrame;
 
         if (movePercent >= 1)
         {
-            curTile = nextTile;
             movePercent = 0;
+            curTile = nextTile;
         }
+		
+	
 	}
 
     void StopMove(){
         isMoving = false;
 		movePercent = 0;
+        
+        SetDirection();
 		path = null;
-        aI_Controller.anim.SetTrigger("idle");
+        //aI_Controller.anim.SetTrigger("idle");
     }
 	void DestReached(){
 		StopMove();
-		destTile = curTile;
+		//curTile = nextTile = destTile;
+        nextTile = null;
 		Debug.Log("Destination reached");
 	/* 	if (onDestReached != null){
 			onDestReached();

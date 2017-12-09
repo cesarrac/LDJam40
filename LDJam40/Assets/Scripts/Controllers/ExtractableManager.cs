@@ -7,7 +7,7 @@ public class ExtractableManager:MonoBehaviour{
     Extractable[] prototypes;
     // defaults:
     int radiantWeight = 5;
-    int radiantYieldRate = 5;
+    int radiantYieldRate = 4;
     int radiantCap = 100;
     int radiantYield = 5;
 

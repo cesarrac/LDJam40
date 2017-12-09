@@ -1,6 +1,8 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
+
 
 public class MouseInputController : MonoBehaviour {
     public static MouseInputController instance {get; protected set;}
@@ -15,7 +17,11 @@ public class MouseInputController : MonoBehaviour {
     }
     private void Update()
     {
+        
         UpdateMousePosition();
+        if (EventSystem.current.IsPointerOverGameObject() == true){
+            return;
+        }
         if (Input.GetMouseButtonDown(0))
         {
             if (onLeftClick != null)

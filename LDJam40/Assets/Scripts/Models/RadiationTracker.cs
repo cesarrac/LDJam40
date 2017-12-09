@@ -31,6 +31,11 @@ public class RadiationTracker  {
 		}
 		heroInventory.onInventoryChanged += OnRadiationReceived;
 	}
+	public void GetClean(){
+		// reset rad
+		radiation = 0;
+		
+	}
 	public void OnRadiationReceived(int oreInInventory){
 		// THE  MORE YOU HAVE THE WORSE IT GETS!!!!!!
 		int baseRad = 2;
@@ -39,6 +44,8 @@ public class RadiationTracker  {
 		int radAmmnt = oreInInventory * baseRad;
 		radiation = radAmmnt;
 		UpdateRadLevel(radiation);
+		// update Enemy nests
+		EnemyManager.instance.UpdateNestsDisturbance(radiation);
 	}
 	void UpdateRadLevel(int rad){
 		if (rad > 0 && rad <= maxRadLevelValues[1]){

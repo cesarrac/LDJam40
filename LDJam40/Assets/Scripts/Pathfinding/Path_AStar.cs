@@ -41,7 +41,7 @@ public class Path_AStar  {
         {
             if (nodes.ContainsKey(endTile) == false)
             {
-                Debug.LogError("PathAStar could not find end tile in path graph!");
+               // Debug.LogError("PathAStar could not find end tile in path graph!");
                 return;
             }
 

@@ -5,9 +5,9 @@ public class CombatController:MonoBehaviour{
 
     Stat[] stats;
     HealthController health_controller;
-    public void Init(int[] statValues, int startingHitPoints){
+    public void Init(int[] statValues, float startingHitPoints, bool isplayer){
         health_controller = GetComponent<HealthController>();
-        health_controller.Init(startingHitPoints);
+        health_controller.Init(startingHitPoints, isplayer);
         if (statValues.Length <= 3){
             stats = new Stat[3];
             stats[0] = new Stat(statValues[0], StatType.Damage);
@@ -33,5 +33,29 @@ public class CombatController:MonoBehaviour{
         Debug.Log(this.gameObject.name + " does " + stats[0].GetValue() + " dmg!");
         target.ReceiveDamage(stats[0].GetValue());
     }
-   
+    
+    public void ModifyStat(StatType sType, float modifier){
+        foreach (Stat stat in stats){
+            if (stat.statType == sType){
+                stat.AddModifier(modifier);
+                break;
+            }
+        }
+    }
+    public void ModifyAllStats(float modifier){
+        foreach (Stat stat in stats){
+            stat.AddModifier(modifier);
+        }
+    }
+    public Stat GetStat(StatType sType){
+        foreach (Stat stat in stats){
+            if (stat.statType == sType){
+                return stat;
+            }
+        }
+        return null;
+    }
+    public float GetHitpoints(){
+        return health_controller.HitPoints;
+    }
 }

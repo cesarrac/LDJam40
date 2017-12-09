@@ -15,8 +15,8 @@ TagManager:
   - 
   - Interactables
   - Player
-  - 
-  - 
+  - Projectiles
+  - Enemies
   - 
   - 
   - 
@@ -46,4 +46,7 @@ TagManager:
     locked: 0
   - name: Surface
     uniqueID: 1623782289
+    locked: 0
+  - name: Top
+    uniqueID: 3098258591
     locked: 0

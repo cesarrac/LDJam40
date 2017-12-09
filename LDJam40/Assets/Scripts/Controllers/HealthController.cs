@@ -15,11 +15,12 @@ public class HealthController : MonoBehaviour {
 	public event HPZero onHPZero;
 	public delegate void Death();
 	public event Death onDeath;
-
-	public void Init(float hPAtStart){
+	public bool isPlayer = false;
+	public void Init(float hPAtStart, bool isplayer){
 		starting_hitpoints = hPAtStart;
 		hitPoints = starting_hitpoints;
 		Debug.Log("Health-control initialized with " + hPAtStart + " hp");
+		isPlayer = isplayer;
 	}
 	public void ReceiveDamage(float dmg){
 		hitPoints -= dmg;
@@ -31,6 +32,10 @@ public class HealthController : MonoBehaviour {
 			if (onDeath != null){
 				onDeath();
 			}
+		}
+		else{
+			if (isPlayer)
+				InventoryUI.instance.ChangeHealthBar(hitPoints, starting_hitpoints);
 		}
 	}
 }

@@ -17,13 +17,13 @@ public class HeroController : MonoBehaviour {
 	RadiationTracker radiation_tracker;
 	float speed = 1;
 	bool isMoving = false;
-	float move_x {
+	public float move_x {
 		get{return pMoveX;}
 		set{
 			pMoveX = Mathf.Clamp(value, 0, areaWidth);
 		}
 	}
-	float move_y{
+	public float move_y{
 		get{return pMoveY;}
 		set{
 			pMoveY = Mathf.Clamp(value, 0, areaHeight);
@@ -46,6 +46,7 @@ public class HeroController : MonoBehaviour {
 		key_controller.onKeyHeld += Move;
 		key_controller.onKeyUp += OnMoveStop;
 		key_controller.onInteractBttnPressed += TryInteract;
+		
 		SetAnimParams(0, 0);
 		Camera_Controller.instance.SetTargetAndLock(this.transform, 0, areaWidth, 0, areaHeight);
 		OnChangeArea();
@@ -66,24 +67,43 @@ public class HeroController : MonoBehaviour {
 	//	Debug.Log("Hero reads from AreaController that active area is : " + curAreaType);
 	}
 
+	public void TestAddOre(int count){
+		for(int i = 0; i < count; i++){
 
+			heroInventory.AddItem(new Extractable(ExtractableType.Radiant, 1, 1, 1, 1));
+		}
+	}
 
 	void OnMove(){
 		anim.ResetTrigger("hero_Idle");
-		anim.SetTrigger("hero_Walk");
+
+
 		isMoving = true;
+		anim.SetBool("isMoving", isMoving);
+		anim.SetTrigger("hero_Walk");
+
+		// Do Bugs fx right next to player
+		if (Random.Range(1, 10) == 1){
+			FX_Controller.instance.DoFX(FXType.Bugs, transform.position);
+		}
 	}
 	void Move(){
 		float input_x = Input.GetAxisRaw("Horizontal");
 		float input_y = Input.GetAxisRaw("Vertical");
+		SetAnimParams(input_x, input_y);
+
+		if (Input.GetButton("Lock Movement")){
+			return;
+		}
+		
 		transform.position += new Vector3(input_x, input_y, 0) * speed * Time.deltaTime;
 		ClampPosition();
-		SetAnimParams(input_x, input_y);
 	}
 	void OnMoveStop(){
 		if (isMoving == true){
 			anim.SetTrigger("hero_Idle");
 			isMoving = false;
+			anim.SetBool("isMoving", isMoving);
 		}
 	}
 
@@ -151,8 +171,13 @@ public class HeroController : MonoBehaviour {
 				// try its neighbors
 				Tile[] neighbors = tileUnderMe.GetNeighbors();
 				for(int i = 0; i < neighbors.Length; i++){
+
 					if (neighbors[i] == null)
 						continue;
+					if (neighbors[i].hasTerminal){
+						interactable = TerminalController.instance.terminal_Interactable;
+						break;
+					}
 					tileGobj = areaController.GetTileGObj(neighbors[i]);
 					if (tileGobj == null)
 						continue;
@@ -168,9 +193,12 @@ public class HeroController : MonoBehaviour {
 			}
 		}
 
-		if (interactable != null)
+		if (interactable != null){
 			interactable.TryInteract(this.gameObject);
-	
+			return;
+		}
+
+		Debug.Log("No interactable found!");
 	}
 
 	void OnDisable(){

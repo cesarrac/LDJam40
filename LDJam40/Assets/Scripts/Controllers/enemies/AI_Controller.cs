@@ -15,7 +15,7 @@ public class AI_Controller : MonoBehaviour {
 	 public GameObject target;
 	 State[] enemy_states;
 	// public EnemyMoveController move_controller {get; protected set;}
-	public LerpMove_Controller move_controller {get; protected set;}
+	public EnemyMoveController move_controller {get; protected set;}
 	 public CircleCollider2D interact_radius {get; protected set;}
 	 public Animator anim {get;protected set;}
 	
@@ -27,7 +27,7 @@ public class AI_Controller : MonoBehaviour {
 			 new EnemySeekState(StateType.Seek, this)
 		 };
 		
-		 move_controller = GetComponent<LerpMove_Controller>();
+		 move_controller = GetComponent<EnemyMoveController>();
 		 interact_radius = GetComponentInChildren<CircleCollider2D>();
 		 anim = GetComponentInChildren<Animator>();
 		combat_controller = GetComponent<CombatController>();
